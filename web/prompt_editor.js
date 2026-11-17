@@ -8,14 +8,14 @@ const TYPE='MossPromptEditor';
 function show(node,text){
     if(!node._mossReceived)return;
     node._mossReceived.value=text??'';
-    node._mossReceived.placeholder=tr('実行すると、受け取ったプロンプトをここに表示します。','After a run, the received prompt is shown here.');
+    node._mossReceived.placeholder=tr('実行すると、受け取ったプロンプトをここに表示します。','After a run, the received prompt is shown here.','运行后，会在这里显示收到的提示词。');
 }
 
 function copyToEditor(node){
     const editor=node.widgets.find(w=>w.name==='編集用プロンプト');
     const text=node.properties?.mossReceivedPrompt;
-    if(!editor||!text){alert(tr('まだプロンプトを受け取っていません。一度実行してください。','No prompt has been received yet. Run the workflow once.'));return;}
-    if(editor.value.trim()&&editor.value!==text&&!confirm(tr('編集欄の内容を、受け取ったプロンプトで置き換えますか？','Replace the edit box with the received prompt?')))return;
+    if(!editor||!text){alert(tr('まだプロンプトを受け取っていません。一度実行してください。','No prompt has been received yet. Run the workflow once.','还没有收到提示词，请先运行一次。'));return;}
+    if(editor.value.trim()&&editor.value!==text&&!confirm(tr('編集欄の内容を、受け取ったプロンプトで置き換えますか？','Replace the edit box with the received prompt?','要用收到的提示词替换编辑框的内容吗？')))return;
     editor.value=text;editor.callback?.(text);
     app.canvas?.setDirty(true,true);
 }
@@ -24,12 +24,12 @@ function install(node){
     if(node._mossEditorInstalled)return;node._mossEditorInstalled=true;
     node.properties??={};
     const box=document.createElement('textarea');
-    box.readOnly=true;box.setAttribute('aria-label',tr('受け取ったプロンプト','Received prompt'));
+    box.readOnly=true;box.setAttribute('aria-label',tr('受け取ったプロンプト','Received prompt','收到的提示词'));
     box.style.cssText='width:100%;height:100%;box-sizing:border-box;resize:none;font:12px/1.4 monospace;background:var(--comfy-input-bg,#222);color:var(--input-text,#ddd);border:1px solid var(--border-color,#555);border-radius:4px;padding:4px;';
     for(const event of ['pointerdown','mousedown','wheel','keydown'])box.addEventListener(event,e=>e.stopPropagation());
     node._mossReceived=box;
-    node.addDOMWidget(tr('受け取ったプロンプト','Received prompt'),'custom',box,{serialize:false,hideOnZoom:false,getMinHeight:()=>160});
-    node.addWidget('button',tr('受け取ったプロンプトを編集欄へコピー','Copy received prompt to the edit box'),null,()=>copyToEditor(node),{serialize:false});
+    node.addDOMWidget(tr('受け取ったプロンプト','Received prompt','收到的提示词'),'custom',box,{serialize:false,hideOnZoom:false,getMinHeight:()=>160});
+    node.addWidget('button',tr('受け取ったプロンプトを編集欄へコピー','Copy received prompt to the edit box','把收到的提示词复制到编辑框'),null,()=>copyToEditor(node),{serialize:false});
     show(node,node.properties.mossReceivedPrompt);
     node.setSize([Math.max(node.size[0],460),Math.max(node.size[1],520)]);
 }

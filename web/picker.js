@@ -11,17 +11,17 @@ const el=(tag,text,className)=>{const n=document.createElement(tag);if(text)n.te
 const favorites=()=>{try{return new Set(JSON.parse(localStorage.getItem(FAVORITES)||'[]'));}catch{return new Set();}};
 function saveFavorites(values){try{localStorage.setItem(FAVORITES,JSON.stringify([...values]));}catch{}}
 async function catalog(force=false){
-    if(force||!catalogPromise)catalogPromise=api.fetchApi('/moss_panel_dataset/catalog').then(r=>{if(!r.ok)throw Error(tr('コマ割り一覧を読み込めません。','Could not load the layout list.'));return r.json();}).then(data=>data.layouts).catch(e=>{catalogPromise=null;throw e;});
+    if(force||!catalogPromise)catalogPromise=api.fetchApi('/moss_panel_dataset/catalog').then(r=>{if(!r.ok)throw Error(tr('コマ割り一覧を読み込めません。','Could not load the layout list.','无法读取分格布局列表。'));return r.json();}).then(data=>data.layouts).catch(e=>{catalogPromise=null;throw e;});
     return catalogPromise;
 }
 const factory=type=>{
     const engine=globalThis.LiteGraph??globalThis.comfyAPI?.litegraph?.LiteGraph;
-    if(!engine?.createNode)throw Error(tr('ComfyUIのノード作成機能が見つかりません。','ComfyUI node creation is not available.'));
+    if(!engine?.createNode)throw Error(tr('ComfyUIのノード作成機能が見つかりません。','ComfyUI node creation is not available.','找不到 ComfyUI 的节点创建功能。'));
     return engine.createNode(type);
 };
 // 同梱データの日本語名・英語名のどちらでも同じ配置として扱う。
 const label=entry=>tr(entry.name,entry.name_en??entry.name);
-const category=entry=>tr(entry.category,entry.category_en??entry.category);
+const category=entry=>tr(entry.category,entry.category_en??entry.category,entry.category_zh??entry.category);
 const findEntry=(entries,value)=>entries.find(e=>e.name===value||e.name_en===value);
 function panelTitles(entry){
     return Array.from({length:entry.count},(_,i)=>{
@@ -55,11 +55,11 @@ function style(){
 async function preview(node,entry){
     const box=node._mossPreview;if(!box)return;
     box.replaceChildren();
-    if(!entry){box.append(el('p',tr('画像からコマ割りを選んでください。','Choose a layout from the images.')));return;}
+    if(!entry){box.append(el('p',tr('画像からコマ割りを選んでください。','Choose a layout from the images.','请从图片中选择分格布局。')));return;}
     if(entry.preview){const img=el('img');img.alt=label(entry);img.src=api.apiURL(entry.preview);box.append(img);}
-    box.append(el('p',tr(`${entry.name}／${entry.count}コマ`,`${label(entry)} / ${entry.count} panels`)));
+    box.append(el('p',tr(`${entry.name}／${entry.count}コマ`,`${label(entry)} / ${entry.count} panels`,`${label(entry)} / ${entry.count} 格`)));
     const retired=Object.keys(node.properties?.mossRetiredPanels??{}).length;
-    if(retired)box.append(el('p',tr(`${retired}コマ分の入力を退避中。コマ数を戻すと復元します。`,`Inputs of ${retired} panel(s) are stashed. They come back when you increase the panel count again.`)));
+    if(retired)box.append(el('p',tr(`${retired}コマ分の入力を退避中。コマ数を戻すと復元します。`,`Inputs of ${retired} panel(s) are stashed. They come back when you increase the panel count again.`,`${retired} 格的输入已暂存，恢复格数时会还原。`)));
     node.setDirtyCanvas?.(true,true);
 }
 
@@ -73,38 +73,38 @@ async function openPicker(node){
     style();
     let entries;
     try{entries=await catalog(true);}catch(error){alert(error.message);return;}
-    const heading=tr('漫画のコマ割りを選ぶ','Choose a manga panel layout');
+    const heading=tr('漫画のコマ割りを選ぶ','Choose a manga panel layout','选择漫画分格布局');
     const dialog=el('dialog',null,'mpp-dialog');dialog.setAttribute('aria-label',heading);
     const top=el('div',null,'mpp-top'),title=el('div',null,'mpp-title');
     title.append(el('h2',heading));
-    const close=el('button',tr('閉じる','Close'));close.onclick=()=>dialog.close();title.append(close);top.append(title);
+    const close=el('button',tr('閉じる','Close','关闭'));close.onclick=()=>dialog.close();title.append(close);top.append(title);
     const filters=el('div',null,'mpp-filters');
     const makeSelect=(name,values)=>{const l=el('label',name+' '),s=el('select');s.setAttribute('aria-label',name);for(const [value,text] of values){const o=el('option',text);o.value=value;s.append(o);}l.append(s);filters.append(l);return s;};
-    const count=makeSelect(tr('コマ数','Panels'),[['',tr('すべて','All')],...[2,3,4,5,6].map(n=>[String(n),tr(`${n}コマ`,`${n} panels`)])]);
-    const type=makeSelect(tr('種類','Type'),[['normal',tr('通常','Standard')],['diagonal',tr('斜め','Diagonal')],['special',tr('特殊','Special')],['',tr('すべて','All')]]);
+    const count=makeSelect(tr('コマ数','Panels','格数'),[['',tr('すべて','All','全部')],...[2,3,4,5,6].map(n=>[String(n),tr(`${n}コマ`,`${n} panels`,`${n} 格`)])]);
+    const type=makeSelect(tr('種類','Type','类型'),[['normal',tr('通常','Standard','标准')],['diagonal',tr('斜め','Diagonal','斜切')],['special',tr('特殊','Special','特殊')],['',tr('すべて','All','全部')]]);
     type.value='normal';
     const selected=findEntry(entries,node.widgets.find(w=>w.name==='コマ割り')?.value);
     count.value=selected?String(selected.count):'';
-    const favLabel=el('label'),fav=el('input');fav.type='checkbox';fav.setAttribute('aria-label',tr('お気に入りのみ','Favorites only'));favLabel.append(fav,document.createTextNode(' '+tr('お気に入りのみ','Favorites only')));filters.append(favLabel);
-    const search=el('input',null,'mpp-search');search.placeholder=tr('名前で検索','Search by name');search.setAttribute('aria-label',tr('コマ割り名で検索','Search layouts by name'));filters.append(search);
+    const favLabel=el('label'),fav=el('input');fav.type='checkbox';fav.setAttribute('aria-label',tr('お気に入りのみ','Favorites only','仅收藏'));favLabel.append(fav,document.createTextNode(' '+tr('お気に入りのみ','Favorites only','仅收藏')));filters.append(favLabel);
+    const search=el('input',null,'mpp-search');search.placeholder=tr('名前で検索','Search by name','按名称搜索');search.setAttribute('aria-label',tr('コマ割り名で検索','Search layouts by name','按布局名称搜索'));filters.append(search);
     const total=el('span');total.setAttribute('aria-live','polite');filters.append(total);top.append(filters);
-    top.append(el('p',tr('画像を選ぶと今のワークフローへ反映します。人物・セリフは保持し、減るコマは退避します。画像はMOSSの出力をWebPへ圧縮したものです。','Picking an image applies it to the current workflow. Characters and dialogue are kept, and removed panels are stashed. Previews are MOSS outputs compressed to WebP.'),'mpp-note'));
+    top.append(el('p',tr('画像を選ぶと今のワークフローへ反映します。人物・セリフは保持し、減るコマは退避します。画像はMOSSの出力をWebPへ圧縮したものです。','Picking an image applies it to the current workflow. Characters and dialogue are kept, and removed panels are stashed. Previews are MOSS outputs compressed to WebP.','选择图片后会应用到当前工作流。人物和台词会保留，减少的分格输入会暂存。示意图片是 MOSS 输出压缩成的 WebP。'),'mpp-note'));
     const grid=el('div',null,'mpp-grid');dialog.append(top,grid);document.body.append(dialog);
     let stars=favorites();
     function render(){
         grid.replaceChildren();
         const q=search.value.toLowerCase();
         const list=entries.filter(e=>e.preview&&(!count.value||e.count===Number(count.value))&&(!type.value||(type.value==='normal'?['通常','直線'].includes(e.category):type.value==='diagonal'?e.category==='斜め':e.category==='特殊'))&&(!fav.checked||stars.has(e.id))&&(!q||`${e.name} ${e.name_en??''}`.toLowerCase().includes(q)));
-        total.textContent=tr(`${list.length}件`,`${list.length} found`);
-        if(!list.length){grid.append(el('p',tr('条件に合う生成済みのコマ割りがありません。','No layouts match the filters.')));return;}
+        total.textContent=tr(`${list.length}件`,`${list.length} found`,`${list.length} 项`);
+        if(!list.length){grid.append(el('p',tr('条件に合う生成済みのコマ割りがありません。','No layouts match the filters.','没有符合条件的分格布局。')));return;}
         for(const entry of list){
             const name=label(entry);
-            const card=el('article',null,'mpp-card'),pick=el('button',null,'mpp-pick');pick.type='button';pick.setAttribute('aria-label',tr(`${name}を選ぶ`,`Choose ${name}`));
+            const card=el('article',null,'mpp-card'),pick=el('button',null,'mpp-pick');pick.type='button';pick.setAttribute('aria-label',tr(`${name}を選ぶ`,`Choose ${name}`,`选择 ${name}`));
             const img=el('img');img.src=api.apiURL(entry.preview);img.alt=name;img.loading='lazy';pick.append(img,el('span',name,'mpp-name'));
             pick.onclick=async()=>{try{await select(node,entry);dialog.close();}catch(error){alert(error.message);}};
-            const flag=entry.quality==='near_duplicate'?tr('・重複候補',' · possible duplicate'):entry.quality==='needs_review'||entry.status==='needs_review'?tr('・要確認',' · needs review'):'';
-            const foot=el('div',null,'mpp-foot');foot.append(el('span',tr(`${entry.count}コマ・${category(entry)}`,`${entry.count} panels · ${category(entry)}`)+flag));
-            const star=el('button',stars.has(entry.id)?'★':'☆','mpp-star');star.type='button';star.setAttribute('aria-label',tr(`${name}のお気に入りを切り替え`,`Toggle favorite for ${name}`));star.setAttribute('aria-pressed',String(stars.has(entry.id)));
+            const flag=entry.quality==='near_duplicate'?tr('・重複候補',' · possible duplicate',' · 可能重复'):entry.quality==='needs_review'||entry.status==='needs_review'?tr('・要確認',' · needs review',' · 需确认'):'';
+            const foot=el('div',null,'mpp-foot');foot.append(el('span',tr(`${entry.count}コマ・${category(entry)}`,`${entry.count} panels · ${category(entry)}`,`${entry.count} 格・${category(entry)}`)+flag));
+            const star=el('button',stars.has(entry.id)?'★':'☆','mpp-star');star.type='button';star.setAttribute('aria-label',tr(`${name}のお気に入りを切り替え`,`Toggle favorite for ${name}`,`切换 ${name} 的收藏`));star.setAttribute('aria-pressed',String(stars.has(entry.id)));
             star.onclick=()=>{stars.has(entry.id)?stars.delete(entry.id):stars.add(entry.id);saveFavorites(stars);render();};foot.append(star);card.append(pick,foot);grid.append(card);
         }
     }
@@ -114,17 +114,17 @@ async function openPicker(node){
 
 function install(node){
     if(node._mossPickerInstalled)return;node._mossPickerInstalled=true;style();
-    node.addWidget('button',tr('画像からコマ割りを選ぶ','Choose a layout from images'),null,()=>openPicker(node),{serialize:false});
+    node.addWidget('button',tr('画像からコマ割りを選ぶ','Choose a layout from images','从图片选择分格布局'),null,()=>openPicker(node),{serialize:false});
     const box=el('div',null,'mpp-preview');node._mossPreview=box;
     for(const event of ['pointerdown','mousedown','dblclick','keydown','click'])box.addEventListener(event,e=>e.stopPropagation());
-    node.addDOMWidget(tr('コマ割りの見本','Layout preview'),'custom',box,{serialize:false,hideOnZoom:false,getMinHeight:()=>225,getMaxHeight:()=>260});
+    node.addDOMWidget(tr('コマ割りの見本','Layout preview','分格布局预览'),'custom',box,{serialize:false,hideOnZoom:false,getMinHeight:()=>225,getMaxHeight:()=>260});
     node.setSize([Math.max(node.size[0],390),Math.max(node.size[1],400)]);
     const widget=node.widgets.find(w=>w.name==='コマ割り');
     if(widget){
         const previous=widget.callback;
         widget.callback=function(value,...args){
             previous?.call(this,value,...args);
-            catalog().then(entries=>{const entry=findEntry(entries,value);if(entry)return select(node,entry);}).catch(error=>console.warn(tr('コマ割りの反映に失敗しました。','Could not apply the layout.'),error));
+            catalog().then(entries=>{const entry=findEntry(entries,value);if(entry)return select(node,entry);}).catch(error=>console.warn(tr('コマ割りの反映に失敗しました。','Could not apply the layout.','无法应用分格布局。'),error));
         };
         catalog().then(entries=>preview(node,findEntry(entries,widget.value))).catch(()=>preview(node,null));
     }

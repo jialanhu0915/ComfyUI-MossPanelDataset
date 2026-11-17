@@ -18,8 +18,9 @@ https://github.com/user-attachments/assets/05a9d952-7a60-448c-94f5-e35ae3029449
 - 減らしたコマの入力を退避し、コマ数を戻すと復元します。人物・セリフ・モデル・サンプラー・シード設定を維持します。
 - 人物の外見と場面は英語で入力し、セリフは描かせたい言語のまま渡します。翻訳や追加のLLMは使いません。
 - 見本・配置情報を同梱しているため、導入後のカタログ閲覧に外部サービスへの接続は不要です。
-- ComfyUIの表示言語が日本語ならノード名・入力欄・選択肢・選択画面を日本語で、それ以外の言語なら英語で表示します。どちらの言語で保存したワークフローもそのまま開けます。
-- 入力に誤りがあると、どの欄をどう直せばよいかを日本語と英語で示して止まります（例: 登場人物にいない人物を話者に選んだとき）。
+- 「配色」で「白黒」（網点）と「カラー」（フルカラー）を選べます。既定は「白黒」で、同梱の見本画像も白黒です。
+- ComfyUIの表示言語が日本語・中国語（簡体）なら、ノード名・入力欄・選択肢・選択画面をその言語で表示し、それ以外の言語なら英語で表示します。どの言語で保存したワークフローもそのまま開けます。
+- 入力に誤りがあると、どの欄をどう直せばよいかを英語で示して止まります（例: 登場人物にいない人物を話者に選んだとき）。
 - 1人・2人・3人向けの構図見本120種類から、コマごとにカメラ構図を選べます。
 - 共通の人物は最大3人。1コマに最大3人・3発言を指定できます。
 - 人物画像から外見を英語の文章へ抽出して入力できます。MOSSのテキストエンコーダー（Qwen）を共用し、追加のモデルは不要です。
@@ -66,6 +67,8 @@ Python 3.10以降と、MOSS-Imageのネイティブ対応を含むComfyUIが必�
 6. ComfyUIの「実行する」を押します。
 
 空枠だけを生成する場合は、選択ノードの「生成内容」を「空のコマ枠」に変えます。人物・場面・セリフをプロンプトから除き、枠だけをMOSSに描かせます。
+
+色を変えるときは、選択ノードの「配色」を「カラー」にします。既定の「白黒」は網点のモノクロ漫画、「カラー」はフルカラーの漫画を描かせます。コマ割り・人物・場面・セリフは変わりません。
 
 ### プロンプトを確認・編集する（任意）
 
@@ -170,6 +173,8 @@ MOSSで使う `CLIPLoader` の `type=moss_image` と `qwen3.5_9b_int8_convrot.sa
 - 人物と吹き出しはコマ内の簡単な固定配置です。場面に応じた最適な配置や吹き出しの尻尾を推論する機能はありません。
 - 文字の誤字・崩れ、人物の混線、コマ数の増減を保証して防ぐものではありません。生成画像に文字や枠を重ねて補修する処理はありません。
 - 導入時のモデルダウンロードとComfyUI本体の環境設定は利用者側で行います。
+- 中国語（簡体）の画面では、同梱のコマ割りと構図の名前は英語で表示します。
+- 同梱のコマ割りと構図の見本画像はすべて白黒で生成しています。「配色」を「カラー」にしても見本は白黒のままです。
 
 ## 更新と検査
 
@@ -181,11 +186,12 @@ MOSSで使う `CLIPLoader` の `type=moss_image` と `qwen3.5_9b_int8_convrot.sa
 
 Registry向け配布では `.comfyignore` によりテストと開発用ファイルを除外します。テストはGitHubのソースには残します。
 
-開発時は、このフォルダで次を実行できます。既存のComfyUI用Pythonなど、`aiohttp` を利用できる環境を使ってください。Node.jsは画面の増減処理の検査にだけ使用し、通常の利用には不要です。
+開発時は、このフォルダで次を実行できます。既存のComfyUI用Pythonなど、`aiohttp` を利用できる環境を使ってください。Node.jsは画面まわりの検査にだけ使用し、通常の利用には不要です。
 
 ```text
 python -m unittest discover -s tests
 node tests/test_picker_state.mjs
+node tests/test_locale.mjs
 ```
 
 ## ライセンスと出典
@@ -214,7 +220,7 @@ https://github.com/user-attachments/assets/05a9d952-7a60-448c-94f5-e35ae3029449
 
 [Demo video (mp4, 30 s)](docs/demo.mp4): a real screen recording of choosing a four-panel layout, entering characters and dialogue, and generating the page in ComfyUI. Waiting time is shortened and Japanese operation captions are shown at the top. The manga image itself is not edited.
 
-The node UI is shown in English unless ComfyUI's language is set to Japanese. The steps below give the Japanese label in 「」 followed by the English label in parentheses, and the table in [Node labels](#node-labels) lists both.
+The node UI is shown in Japanese or Simplified Chinese when ComfyUI's language is set to either, and in English otherwise. The steps below give the Japanese label in 「」 followed by the English label in parentheses, and the table in [Node labels](#node-labels) lists both. The Japanese label is also the internal key stored in workflows.
 
 ## Features
 
@@ -224,8 +230,9 @@ The node UI is shown in English unless ComfyUI's language is set to Japanese. Th
 - Inputs of removed panels are stashed and restored when you increase the panel count again. Characters, dialogue, model, sampler, and seed settings are kept.
 - Write character appearance and scenes in English. Dialogue is passed through in whatever language you want rendered. No translation or extra LLM is used.
 - Previews and layout data are bundled, so browsing the catalog needs no external service.
-- Node names, input fields, choices, and picker dialogs follow ComfyUI's display language: Japanese when it is set to Japanese, English otherwise. Workflows saved in either language open as is.
-- Input mistakes stop the run with a message in Japanese and English that names the field and how to fix it (for example, a speaker who is not one of the panel's characters).
+- 「配色」 (Coloring) switches between 「白黒」 (black and white with screentones) and 「カラー」 (full-color manga). The default is black and white, and the bundled previews are black and white too.
+- Node names, input fields, choices, and picker dialogs follow ComfyUI's display language: Japanese when it is set to Japanese, Simplified Chinese when it is set to Chinese, English otherwise. Workflows saved in any of these languages open as is.
+- Input mistakes stop the run with an English message that names the field and how to fix it (for example, a speaker who is not one of the panel's characters).
 - Choose a camera composition for each panel from 120 composition previews for one, two, or three characters.
 - Up to three shared characters, with up to three characters and three lines per panel.
 - Extract a character's appearance from a reference image as English text. It reuses the MOSS text encoder (Qwen), so no extra model is needed.
@@ -272,6 +279,8 @@ The original dataset was generated on Windows with an RTX 3060 12GB. The bundled
 6. Press the Run button in ComfyUI.
 
 To generate empty panel frames only, set 「生成内容」 (output) on the layout node to 「空のコマ枠」 (empty panel frames). Characters, scenes, and dialogue are then left out of the prompt, and MOSS draws only the frames.
+
+To change the coloring, set 「配色」 (coloring) on the layout node to 「カラー」 (color). The default 「白黒」 draws monochrome manga with screentones; 「カラー」 draws full-color manga. The layout, characters, scenes, and dialogue stay the same.
 
 ### Viewing and editing the prompt (optional)
 
@@ -360,6 +369,7 @@ The manga page prompt used to specify adult proportions (`natural adult proporti
 | 人物の外見（画像／文章） | Character appearance (image / text) |
 | コマ割り | Layout |
 | 生成内容: 漫画 / 空のコマ枠 | Output: manga / empty panel frames |
+| 配色: 白黒 / カラー | Coloring: black and white / color |
 | 人物1_名前 / 人物1_外見 | Character 1 name / appearance |
 | 場面 | Scene |
 | 人物3_名前 / 人物3_外見 | Character 3 name / appearance (optional) |
@@ -399,6 +409,8 @@ Planned features are listed in [ROADMAP.md](ROADMAP.md).
 - Characters and speech balloons use simple fixed positions inside each panel. The node does not infer the best placement for a scene or the balloon tail direction.
 - Typos or broken text, mixed-up characters, and changes in panel count are not prevented. Nothing is overlaid on the generated image to fix text or borders.
 - Downloading models and setting up ComfyUI itself are up to you.
+- In the Simplified Chinese UI, the names of the bundled layouts and compositions are shown in English.
+- The bundled layout and composition previews were generated in black and white, so they stay black and white even when Coloring is set to color.
 
 ## Updating and tests
 
@@ -410,11 +422,12 @@ Since 0.1.1, the 196 layouts are also read from `data/layouts.json`, so no datab
 
 For the Registry package, `.comfyignore` excludes tests and development files; the tests remain in the GitHub source.
 
-For development, you can run the following in this folder. Use an environment that has `aiohttp`, such as your ComfyUI Python. Node.js is used only to test the panel add/remove logic and is not needed for normal use.
+For development, you can run the following in this folder. Use an environment that has `aiohttp`, such as your ComfyUI Python. Node.js is used only for the UI checks and is not needed for normal use.
 
 ```text
 python -m unittest discover -s tests
 node tests/test_picker_state.mjs
+node tests/test_locale.mjs
 ```
 
 ## License and credits

@@ -5,6 +5,7 @@
     "inputs": {
       "コマ割り": { "name": "Layout", "tooltip": "Press \"Choose a layout from images\" to pick from previews. Panel inputs are added or removed automatically." },
       "生成内容": { "name": "Output", "tooltip": "\"Manga\" draws characters and dialogue. \"Empty panel frames\" draws only the panel borders." },
+      "配色": { "name": "Coloring", "tooltip": "\"Black and white\" draws manga with screentones; \"Color\" draws full-color manga. The bundled previews were generated in black and white." },
       "人物設定": { "name": "Shared characters", "tooltip": "Connect the \"Shared characters\" node." },
       "コマ1": { "name": "Panel 1" },
       "コマ2": { "name": "Panel 2" },

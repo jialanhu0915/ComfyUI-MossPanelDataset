@@ -20,7 +20,7 @@ class ThreeCharacters(unittest.TestCase):
             self.assertGreater(group[0]['bbox'][1],group[1]['bbox'][1]);self.assertGreater(group[1]['bbox'][1],group[2]['bbox'][1])
     def test_missing_third_and_duplicate_names_are_errors(self):
         panel=self.panel()
-        with self.assertRaisesRegex(ValueError,'人物3'):
+        with self.assertRaisesRegex(ValueError,'Character 3'):
             nodes.MossPanelDatasetFlexible().build(**{'コマ割り':'normal_2_01','生成内容':'漫画','人物設定':self.cast(False),'コマ1':panel,'コマ2':panel})
         fields={'人物1_名前':'花子','人物1_外見':'Woman.','人物2_名前':'太郎','人物2_外見':'Man.','人物3_名前':'花子','人物3_外見':'Woman.'}
         with self.assertRaises(ValueError):nodes.MossMangaCharacters().build(**fields)

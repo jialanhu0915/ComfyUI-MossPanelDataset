@@ -191,7 +191,7 @@ class Distribution(unittest.TestCase):
             self.assertEqual(module.WEB_DIRECTORY, './web')
             self.assertEqual(len(server.PromptServer.instance.routes), 5)
             self.assertEqual(set(module.NODE_CLASS_MAPPINGS), {'MossPanelDatasetFlexible', 'MossMangaCharacters', 'MossMangaPanel', 'MossPromptEditor', 'MossCompositionTemplate','MossCharacterAppearance'})
-            with self.assertRaisesRegex(RuntimeError, '重複'):
+            with self.assertRaisesRegex(RuntimeError, 'installed twice'):
                 import_package(self.root, '_moss_panel_distribution_test_duplicate')
 
 

@@ -1,6 +1,6 @@
 import { app } from '../../scripts/app.js';
 import { api } from '../../scripts/api.js';
-import { useApp, isJa, translations, localizeCombo } from './i18n.mjs';
+import { useApp, languageIndex, translations, localizeCombo } from './i18n.mjs';
 
 // 各ノードの選択肢・既定の名前・ノード名を、ComfyUIの表示言語へそろえる。
 useApp(app);
@@ -18,7 +18,7 @@ async function localize(node){
     }
     const known=[...info.display,...(info.legacy_titles??[])];
     if(known.includes(node.title)){
-        const title=info.display[isJa()?0:1];
+        const title=info.display[languageIndex()]??info.display[1];
         if(node.title!==title){node.title=title;changed=true;}
     }
     if(changed)node.setDirtyCanvas?.(true,true);

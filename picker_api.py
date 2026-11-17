@@ -6,6 +6,7 @@ from . import dataset as core
 
 ROOT = Path(__file__).resolve().parent
 CATEGORY_EN = {'通常': 'Standard', '直線': 'Straight', '斜め': 'Diagonal', '特殊': 'Special'}
+CATEGORY_ZH = {'通常': '标准', '直線': '直线', '斜め': '斜切', '特殊': '特殊'}
 
 
 def position_en(text, index):
@@ -23,6 +24,7 @@ def catalog_items():
         items.append({
             'id': ident, 'name': name, 'name_en': record.get('name_en', name), 'count': len(layout['panels']), 'category': category,
             'category_en': CATEGORY_EN.get(category, category),
+            'category_zh': CATEGORY_ZH.get(category, category),
             'positions': [p.get('display_position', f'{i}コマ目') for i, p in enumerate(layout['panels'], 1)],
             'positions_en': [position_en(p.get('display_position', f'{i}コマ目'), i) for i, p in enumerate(layout['panels'], 1)],
             'preview': f'/moss_panel_dataset/preview/{ident}', 'status': 'complete',
@@ -34,15 +36,15 @@ def catalog_items():
 
 def preview_path(ident):
     if not re.fullmatch(r'[A-Za-z0-9_]{1,100}', ident):
-        raise ValueError('配置IDが不正です。')
+        raise ValueError('Invalid layout ID.')
     record=next((item for item in core.load_catalog() if item['id']==ident),None)
     if not record:
-        raise FileNotFoundError('見本画像がありません。')
+        raise FileNotFoundError('No preview image.')
     path = (ROOT / record['preview']['image_path']).resolve()
     if not path.is_relative_to((ROOT / 'images').resolve()) or path.suffix.lower() != '.webp':
-        raise ValueError('見本画像フォルダの外は参照できません。')
+        raise ValueError('Paths outside the preview image folder are not allowed.')
     if not path.is_file():
-        raise FileNotFoundError('見本画像が見つかりません。')
+        raise FileNotFoundError('Preview image not found.')
     return path
 
 
@@ -51,11 +53,12 @@ def client_table():
     from . import composition
     from . import i18n
     ja = json.loads((ROOT / 'locales' / 'ja' / 'nodeDefs.json').read_text(encoding='utf-8'))
+    zh = json.loads((ROOT / 'locales' / 'zh' / 'nodeDefs.json').read_text(encoding='utf-8'))
     en = i18n.LABELS
     speakers = {f'話者{i}': i18n.SPEAKERS for i in (1, 2, 3)}
     combos = {
         'MossPanelDatasetFlexible': {'コマ割り': [[r['name'], r.get('name_en', r['name'])] for r in core.load_catalog()],
-                                     '生成内容': i18n.OUTPUTS},
+                                     '生成内容': i18n.OUTPUTS, '配色': i18n.COLOURS},
         'MossMangaCharacters': {'人物1_名前': i18n.DEFAULT_NAMES, '人物2_名前': i18n.DEFAULT_NAMES},
         'MossMangaPanel': {'登場人物': i18n.ACTORS, **speakers},
         'MossPromptEditor': {'使うプロンプト': i18n.EDITOR_MODES},
@@ -63,7 +66,7 @@ def client_table():
         'MossCharacterAppearance': {'指定方法': i18n.APPEARANCE_MODES},
     }
     legacy = {'MossPanelDatasetFlexible': ['画像からコマ割りを選ぶ（2〜6コマ）']}
-    return {'nodes': {name: {'display': [ja[name]['display_name'], en[name]['display_name']],
+    return {'nodes': {name: {'display': [ja[name]['display_name'], en[name]['display_name'], zh[name]['display_name']],
                              'legacy_titles': legacy.get(name, []),
                              'combos': {k: [list(p) for p in v] for k, v in combos[name].items()}}
                       for name in en}}
